@@ -1,0 +1,22 @@
+# Swift Package Manager build artifacts
+.build/
+Packages/
+.swiftpm/
+
+# Xcode settings and artifacts
+*.xcodeproj/
+*.xcworkspace/
+DerivedData/
+*.xcresult/
+
+# Environment and logs
+.env
+.env.*
+*.log
+
+# OS files
+.DS_Store
+
+# Git
+.git
+.gitignore

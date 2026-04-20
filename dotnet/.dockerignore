@@ -1,0 +1,24 @@
+**/*.swp
+**/*.swo
+.DS_Store
+
+# .NET specific
+bin/
+obj/
+out/
+publish/
+
+# Source control
+.git/
+.gitignore
+.dockerignore
+
+# IDE specific
+.vscode/
+.idea/
+*.user
+*.suo
+*.sln.dotSettings
+
+# Logs
+*.log

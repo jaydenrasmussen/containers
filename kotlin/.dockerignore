@@ -1,0 +1,20 @@
+# Build artifacts
+build/
+out/
+bin/
+.gradle/
+
+# IDE settings
+.idea/
+*.iml
+.vscode/
+.settings/
+.project/
+.classpath/
+
+# Environment and logs
+.env
+*.log
+
+# OS files
+.DS_Store

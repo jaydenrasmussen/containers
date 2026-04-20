@@ -1,0 +1,12 @@
+node_modules
+bun.lockb
+.git
+.gitignore
+.vscode
+.env
+.env.*
+!.env.example
+dist
+out
+build
+*.log

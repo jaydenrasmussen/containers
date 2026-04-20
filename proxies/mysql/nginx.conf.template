@@ -1,0 +1,30 @@
+user nginx;
+worker_processes auto;
+error_log /var/log/nginx/error.log notice;
+pid /var/run/nginx.pid;
+
+events {
+    worker_connections 1024;
+}
+
+stream {
+    # Use the VPC DNS resolver so NGINX re-resolves the upstream hostname on each
+    # new connection rather than caching the IP at startup. This is required for
+    # RDS Multi-AZ and Aurora failover, where the CNAME endpoint is updated to
+    # point at the new primary — without this, NGINX would keep hitting the
+    # stale IP of the old instance until the container is restarted.
+    #
+    # Default: 169.254.169.253 (AWS VPC resolver, reachable from any VPC subnet).
+    # Override RESOLVER_ADDRESS if running outside AWS or in a custom DNS setup.
+    resolver ${RESOLVER_ADDRESS} valid=10s ipv6=off;
+    resolver_timeout 5s;
+
+    server {
+        listen ${LISTEN_PORT};
+
+        # Assigning the upstream to a variable is what forces NGINX to go through
+        # the resolver on every new connection instead of resolving once at startup.
+        set $upstream "${UPSTREAM_HOST}:${UPSTREAM_PORT}";
+        proxy_pass $upstream;
+    }
+}
