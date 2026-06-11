@@ -27,6 +27,7 @@ Every template follows the same core principles:
     │   ├── Dockerfile          # x86_64 static binary to scratch
     │   └── Dockerfile.arm64    # ARM64 static binary to scratch
     ├── swift/                  # Swift 5.9 (static stdlib)
+    ├── static-web/             # Static sites (BusyBox httpd, SPA-ready)
     ├── typescript/             # Node.js 24 native TypeScript
     └── proxies/                # NGINX proxy templates
         ├── mysql/
@@ -170,6 +171,26 @@ A two-stage build for Swift Package Manager projects:
 
 1. **build** — copies Package.swift and Package.resolved first for dependency caching, resolves packages, then copies source and compiles with --static-swift-stdlib -c release.
 2. **release** — uses the slim Swift runtime image, runs as swiftuser, and discovers the compiled binary via a find command. The ENTRYPOINT comment documents replacing this with a direct binary invocation once the executable name is known.
+
+---
+
+### Static Web
+
+**Path:** static-web/  
+**Base image:** lipanski/docker-static-website:2.6.0  
+**Exposes:** 3000
+
+A single-line Dockerfile built on top of a minimal BusyBox httpd image (~154 kB). Copy your pre-built static files into the image and they are served immediately — no Node, no NGINX, no runtime.
+
+The included `httpd.conf` adds two things beyond the BusyBox defaults:
+
+- **SPA routing** — any path that does not match a real file falls back to `index.html`, so client-side routers (React Router, Vue Router, SvelteKit, etc.) work without 404s.
+- **Extended MIME types** — explicit mappings for `.mjs`, `.wasm`, `.svg`, `.webp`, `.avif`, `.ico`, `.woff`, `.woff2`, `.json`, and `.map`, which BusyBox does not recognise by default.
+
+Build after running your frontend bundler (e.g. `npm run build`):
+
+    docker build -t my-site static-web/
+    docker run -p 3000:3000 my-site
 
 ---
 
