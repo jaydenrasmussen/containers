@@ -6,5 +6,5 @@ RUN pip install pipenv && pipenv install --deploy --ignore-pipfile
 
 # fresh image
 FROM base
-COPY /app /app --from=base
+COPY --from=base /app /app
 CMD ["pipenv", "run", "python", "main.py"]
