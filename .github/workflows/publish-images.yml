@@ -1,0 +1,72 @@
+name: publish-images
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.find.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Discover Dockerfiles
+        id: find
+        run: |
+          set -euo pipefail
+          items=()
+          while IFS= read -r f; do
+            rel="${f#./}"
+            dir="$(dirname "$rel")"
+            base="$(basename "$rel")"
+            name="$(echo "$dir" | tr '/' '-')"
+            [ "$name" = "." ] && name="root"
+            if [ "$base" != "Dockerfile" ]; then
+              name="${name}-${base#Dockerfile.}"
+            fi
+            platform="linux/amd64"
+            case "$name" in *-arm64) platform="linux/arm64" ;; esac
+            items+=("$(jq -cn --arg file "$rel" --arg context "$dir" --arg name "$name" --arg platform "$platform" '{file:$file,context:$context,name:$name,platform:$platform}')")
+          done < <(find . -name 'Dockerfile*' -not -path './.git/*' | sort)
+          matrix="$(printf '%s\n' "${items[@]}" | jq -sc '{include: .}')"
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.discover.outputs.matrix) }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/containers-${{ matrix.name }}
+          tags: |
+            type=sha
+            type=raw,value=latest
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
