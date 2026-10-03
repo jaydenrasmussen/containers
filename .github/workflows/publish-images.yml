@@ -18,9 +18,11 @@ jobs:
         id: find
         run: |
           set -euo pipefail
+          skip=" golang/Dockerfile dotnet/Dockerfile typescript/Dockerfile bun/Dockerfile swift/Dockerfile python/uv/Dockerfile rust/Dockerfile rust/Dockerfile.arm64 "
           items=()
           while IFS= read -r f; do
             rel="${f#./}"
+            case "$skip" in *" $rel "*) continue ;; esac
             dir="$(dirname "$rel")"
             base="$(basename "$rel")"
             name="$(echo "$dir" | tr '/' '-')"
