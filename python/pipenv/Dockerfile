@@ -1,4 +1,4 @@
-FROM python:3.19-slim-bookworm as base
+FROM python:3.14-slim-bookworm as base
 WORKDIR /app
 COPY ./*.py /app/
 COPY Pipfile Pipfile.lock /app/

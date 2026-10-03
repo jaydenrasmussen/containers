@@ -1,4 +1,4 @@
-FROM python:3.19-slim-bookworm as base
+FROM python:3.14-slim-bookworm as base
 COPY ./*.py /app/
 COPY ./requirements.txt /app/
 RUN pip install --upgrade pip
